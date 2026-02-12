@@ -7,6 +7,53 @@ import Logger from '../utils/logger';
 
 const prisma = new PrismaClient();
 
+// DELETE /api/recipes/:id/remove-image - FIX COMPLETO
+export const removeRecipeImageController = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Non autorizzato' 
+      });
+    }
+
+    const recipe = await prisma.recipe.findFirst({
+      where: { 
+        id, 
+        authorId: userId 
+      }
+    });
+
+    if (!recipe) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Ricetta non trovata' 
+      });
+    }
+
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id },
+      data: { imageUrl: null }
+    });
+
+    return res.json({
+      success: true,
+      message: 'Immagine rimossa con successo',
+      data: updatedRecipe
+    });
+  } catch (error) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Errore rimozione immagine' 
+    });
+  }
+};
+
+
+
 // Helper: Process tags
 async function processTags(tags: any[]): Promise<{ id: string }[]> {
   if (!tags?.length) return [];
@@ -78,6 +125,9 @@ async function uploadImage(
     filename
   );
 }
+
+
+
 
 // GET /api/recipes
 export async function getRecipes(req: Request, res: Response) {
@@ -815,7 +865,8 @@ export async function removeRecipeImage(req: AuthRequest, res: Response) {
   }
 }
 
-export async function deleteComment(req: AuthRequest, res: Response) {
+export async function deleteComment(req: AuthRequest, res: Response) 
+{
   try {
     const { commentId } = req.params;
     const userId = req.user?.id;
@@ -834,7 +885,6 @@ export async function deleteComment(req: AuthRequest, res: Response) {
         message: 'Non autorizzato a eliminare questo commento' 
       });
     }
-
     await prisma.$transaction([
       prisma.comment.delete({ where: { id: commentId } }),
       prisma.recipe.update({
@@ -851,5 +901,7 @@ export async function deleteComment(req: AuthRequest, res: Response) {
       message: 'Errore nell\'eliminazione del commento',
       error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
     });
-  }
+  } 
 }
+
+
