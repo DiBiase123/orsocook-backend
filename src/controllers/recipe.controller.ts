@@ -534,6 +534,8 @@ export async function uploadRecipeImage(req: AuthRequest, res: Response) {
   }
 }
 
+
+
 // LIKE FUNCTIONS
 export async function getRecipeLikesCount(req: Request, res: Response) {
   try {
@@ -812,6 +814,7 @@ export async function removeRecipeImage(req: AuthRequest, res: Response) {
     });
   }
 }
+
 export async function deleteComment(req: AuthRequest, res: Response) {
   try {
     const { commentId } = req.params;
