@@ -762,6 +762,56 @@ export async function updateComment(req: AuthRequest, res: Response) {
   }
 }
 
+// DELETE /api/recipes/:id/remove-image
+export async function removeRecipeImage(req: AuthRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Non autorizzato' 
+      });
+    }
+
+    // Verifica che la ricetta esista e appartenga all'utente
+    const recipe = await prisma.recipe.findFirst({
+      where: {
+        id,
+        authorId: userId
+      }
+    });
+
+    if (!recipe) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Ricetta non trovata o non autorizzata' 
+      });
+    }
+
+    // Aggiorna la ricetta rimuovendo l'URL dell'immagine
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id },
+      data: { imageUrl: null }
+    });
+
+    Logger.info('Recipe image removed', { recipeId: id, userId });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Immagine rimossa con successo',
+      data: updatedRecipe
+    });
+  } catch (error) {
+    Logger.error('Error removing recipe image', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Errore durante la rimozione dell\'immagine',
+      error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
+    });
+  }
+}
 export async function deleteComment(req: AuthRequest, res: Response) {
   try {
     const { commentId } = req.params;

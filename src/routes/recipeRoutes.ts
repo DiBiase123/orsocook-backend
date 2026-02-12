@@ -18,7 +18,8 @@ import {
   getRecipeComments,
   createComment,
   updateComment,
-  deleteComment
+  deleteComment,
+  removeRecipeImage 
 } from '../controllers/recipe.controller';
 
 // @ts-ignore - Ignora errore tipo multer
@@ -56,6 +57,9 @@ router.get('/user/:userId', authenticateToken, getUserRecipes);
 
 // Upload immagine separato (per quando crei ricetta prima, immagine dopo)
 router.post('/:id/upload-image', authenticateToken, upload.single('image'), uploadRecipeImage);
+
+// 🔥 AGGIUNGI QUESTA RIGA:
+router.delete('/:id/remove-image', authenticateToken, removeRecipeImage);
 
 // Likes
 router.get('/:id/liked', authenticateToken, checkRecipeLiked); // Verifica se utente ha messo like
