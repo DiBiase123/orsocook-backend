@@ -527,8 +527,13 @@ export async function getUserRecipes(req: AuthRequest, res: Response) {
 }
 
 // POST /api/recipes/:id/upload-image
+
 export async function uploadRecipeImage(req: AuthRequest, res: Response) {
   try {
+    console.log('🔥🔥🔥 uploadRecipeImage CALLED');
+console.log('🔥 req.file:', req.file);
+console.log('🔥 req.body:', req.body);
+console.log('🔥 req.headers["content-type"]:', req.headers['content-type']);
     const { id } = req.params;
     
     if (!req.file?.buffer) {
