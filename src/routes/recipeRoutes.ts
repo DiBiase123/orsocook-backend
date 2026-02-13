@@ -25,11 +25,12 @@ import {
 // @ts-ignore - Ignora errore tipo multer
 import multer from 'multer';
 
+// ✅ CONFIGURAZIONE MULTER CON LIMITI AUMENTATI
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
-    fieldSize: 10 * 1024 * 1024, // ✅ 10MB anche per i campi
+    fileSize: 50 * 1024 * 1024, // 50MB per i file
+    fieldSize: 50 * 1024 * 1024, // 50MB per i campi
   },
   fileFilter: (req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (file.mimetype.startsWith('image/')) {
@@ -45,8 +46,8 @@ const router = express.Router();
 // ==================== PUBLIC ROUTES ====================
 router.get('/', getRecipes);
 router.get('/:id', getRecipeById);
-router.get('/:id/likes', getRecipeLikesCount); // Conteggio totale likes (pubblico)
-router.get('/:id/comments', getRecipeComments); // Lista commenti (pubblico)
+router.get('/:id/likes', getRecipeLikesCount);
+router.get('/:id/comments', getRecipeComments);
 
 // ==================== PROTECTED ROUTES ====================
 // CRUD Ricette
@@ -55,29 +56,49 @@ router.put('/:id', authenticateToken, upload.single('image'), updateRecipe);
 router.delete('/:id', authenticateToken, deleteRecipe);
 router.get('/user/:userId', authenticateToken, getUserRecipes);
 
-// Upload immagine separato (per quando crei ricetta prima, immagine dopo)
-// Upload immagine separato (con gestione errori Multer)
+// ==================== UPLOAD IMMAGINE CON GESTIONE ERRORI MULTER ====================
 router.post('/:id/upload-image', 
   authenticateToken, 
-  upload.single('image'),
   (req, res, next) => {
-    if (!req.file) {
-      console.error('❌ req.file is undefined after multer');
-      console.error('❌ headers:', req.headers);
-    }
-    next();
+    // Middleware per gestire errori di Multer in modo centralizzato
+    upload.single('image')(req, res, function (err: any) {
+      if (err) {
+        // Stampa dettagliata dell'errore Multer
+        console.error('❌❌❌ MULTER ERROR ❌❌❌');
+        console.error('Codice Errore:', err.code);
+        console.error('Messaggio:', err.message);
+        console.error('Campo:', err.field);
+        console.error('Errore completo:', err);
+        
+        return res.status(400).json({
+          success: false,
+          message: `Errore durante il processamento del file: ${err.message}`,
+          code: err.code
+        });
+      }
+
+      // Se non ci sono errori, controlla se il file esiste
+      if (!req.file) {
+        console.warn('⚠️⚠️⚠️ req.file è undefined, ma nessun errore Multer è stato lanciato.');
+        console.warn('Content-Length:', req.headers['content-length']);
+        console.warn('Content-Type:', req.headers['content-type']);
+      }
+      
+      next();
+    });
   },
   uploadRecipeImage
 );
-// 🔥 Rimuovi immagine ricetta
+
+// ==================== RIMOZIONE IMMAGINE ====================
 router.delete('/:id/remove-image', authenticateToken, removeRecipeImage);
 
-// Likes
-router.get('/:id/liked', authenticateToken, checkRecipeLiked); // Verifica se utente ha messo like
-router.post('/:id/like', authenticateToken, addLikeToRecipe); // Aggiungi like
-router.delete('/:id/like', authenticateToken, removeLikeFromRecipe); // Rimuovi like
+// ==================== LIKES ====================
+router.get('/:id/liked', authenticateToken, checkRecipeLiked);
+router.post('/:id/like', authenticateToken, addLikeToRecipe);
+router.delete('/:id/like', authenticateToken, removeLikeFromRecipe);
 
-// Commenti
-router.post('/:id/comments', authenticateToken, createComment); // Crea commento
+// ==================== COMMENTI ====================
+router.post('/:id/comments', authenticateToken, createComment);
 
 export default router;
