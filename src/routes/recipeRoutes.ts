@@ -25,11 +25,11 @@ import {
 // @ts-ignore - Ignora errore tipo multer
 import multer from 'multer';
 
-// ✅ MODIFICA: Usa memoryStorage invece di diskStorage per Vercel
 const upload = multer({ 
-  storage: multer.memoryStorage(), // ⬅️ MODIFICA CRUCIALE
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB
+    fieldSize: 10 * 1024 * 1024, // ✅ 10MB anche per i campi
   },
   fileFilter: (req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (file.mimetype.startsWith('image/')) {
