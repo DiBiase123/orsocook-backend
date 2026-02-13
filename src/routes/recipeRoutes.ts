@@ -57,18 +57,18 @@ router.get('/user/:userId', authenticateToken, getUserRecipes);
 
 // Upload immagine separato (per quando crei ricetta prima, immagine dopo)
 // Upload immagine separato (con gestione errori Multer)
-router.post('/:id/upload-image', authenticateToken, (req, res, next) => {
-  upload.single('image')(req, res, (err) => {
-    if (err) {
-      console.error('❌ Multer error:', err);
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Errore upload: ' + err.message 
-      });
+router.post('/:id/upload-image', 
+  authenticateToken, 
+  upload.single('image'),
+  (req, res, next) => {
+    if (!req.file) {
+      console.error('❌ req.file is undefined after multer');
+      console.error('❌ headers:', req.headers);
     }
     next();
-  });
-}, uploadRecipeImage);
+  },
+  uploadRecipeImage
+);
 // 🔥 Rimuovi immagine ricetta
 router.delete('/:id/remove-image', authenticateToken, removeRecipeImage);
 
