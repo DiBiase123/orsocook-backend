@@ -56,46 +56,18 @@ router.put('/:id', authenticateToken, upload.single('image'), updateRecipe);
 router.delete('/:id', authenticateToken, deleteRecipe);
 router.get('/user/:userId', authenticateToken, getUserRecipes);
 
-// ==================== UPLOAD IMMAGINE CON DEBUG RAW ====================
 router.post('/:id/upload-image', 
-  authenticateToken,
   (req, res, next) => {
-    // 🔥 DEBUG: cattura i dati raw
-    let data: Buffer[] = [];
-    req.on('data', chunk => {
-      data.push(chunk);
-      console.log(`📦 Chunk ricevuto: ${chunk.length} bytes`);
-    });
-    req.on('end', () => {
-      const total = Buffer.concat(data).length;
-      console.log(`📦📦📦 TOTALE BYTES RICEVUTI: ${total}`);
-      next();
-    });
-  },
-  (req, res, next) => {
-    // Middleware per gestire errori di Multer
+    // ⬅️ Prima Multer, POI authenticateToken
     upload.single('image')(req, res, function (err: any) {
       if (err) {
-        console.error('❌❌❌ MULTER ERROR ❌❌❌');
-        console.error('Codice Errore:', err.code);
-        console.error('Messaggio:', err.message);
-        console.error('Campo:', err.field);
-        
-        return res.status(400).json({
-          success: false,
-          message: `Errore durante il processamento del file: ${err.message}`,
-          code: err.code
-        });
+        console.error('❌ MULTER ERROR:', err);
+        return res.status(400).json({ success: false, message: err.message });
       }
-
-      if (!req.file) {
-        console.warn('⚠️ req.file undefined dopo Multer');
-        console.warn('Content-Length header:', req.headers['content-length']);
-      }
-      
       next();
     });
   },
+  authenticateToken,  // ✅ AUTENTICAZIONE DOPO MULTER!
   uploadRecipeImage
 );
 
