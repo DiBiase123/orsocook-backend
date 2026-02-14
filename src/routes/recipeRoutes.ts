@@ -1,5 +1,4 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
 import { authenticateToken } from '../middleware/auth';
 import {
   getRecipes,
@@ -51,32 +50,8 @@ router.put('/:id', authenticateToken, upload.single('image'), updateRecipe);
 router.delete('/:id', authenticateToken, deleteRecipe);
 router.get('/user/:userId', authenticateToken, getUserRecipes);
 
-// ==================== UPLOAD IMMAGINE ====================
-router.post('/:id/upload-image', 
-  (req, res, next) => {
-    upload.single('image')(req, res, async (err: any) => {
-      if (err) {
-        console.error('❌ Multer error:', err);
-        return res.status(400).json({ success: false, message: err.message });
-      }
-      const authHeader = req.headers['authorization'];
-      const token = authHeader && authHeader.split(' ')[1];
-      
-      if (!token) {
-        return res.status(401).json({ success: false, message: 'Token mancante' });
-      }
-
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        (req as any).user = decoded;
-        next();
-      } catch (error) {
-        return res.status(403).json({ success: false, message: 'Token non valido' });
-      }
-    });
-  },
-  uploadRecipeImage
-);
+// ==================== UPLOAD IMMAGINE (semplificata come le altre) ====================
+router.post('/:id/upload-image', authenticateToken, upload.single('image'), uploadRecipeImage);
 
 // ==================== RIMOZIONE IMMAGINE ====================
 router.delete('/:id/remove-image', authenticateToken, removeRecipeImage);
