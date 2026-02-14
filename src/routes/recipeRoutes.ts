@@ -8,14 +8,11 @@ import {
   updateRecipe,
   deleteRecipe,
   getUserRecipes,
-  // LIKE FUNCTIONS
   getRecipeLikesCount,
   checkRecipeLiked,
   addLikeToRecipe,
   removeLikeFromRecipe,
-  // UPLOAD IMAGE FUNCTION
   uploadRecipeImage,
-  // NEW: COMMENT FUNCTIONS
   getRecipeComments,
   createComment,
   updateComment,
@@ -23,15 +20,13 @@ import {
   removeRecipeImage 
 } from '../controllers/recipe.controller';
 
-// @ts-ignore - Ignora errore tipo multer
 import multer from 'multer';
 
-// ✅ CONFIGURAZIONE MULTER CON LIMITI AUMENTATI
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB per i file
-    fieldSize: 50 * 1024 * 1024, // 50MB per i campi
+    fileSize: 50 * 1024 * 1024,
+    fieldSize: 50 * 1024 * 1024,
   },
   fileFilter: (req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (file.mimetype.startsWith('image/')) {
@@ -50,27 +45,25 @@ router.get('/:id', getRecipeById);
 router.get('/:id/likes', getRecipeLikesCount);
 router.get('/:id/comments', getRecipeComments);
 
-// ==================== UPLOAD IMMAGINE - VERSIONE FINALE ====================
+// ==================== PROTECTED ROUTES (CRUD) ====================
+router.post('/', authenticateToken, upload.single('image'), createRecipe);
+router.put('/:id', authenticateToken, upload.single('image'), updateRecipe);
+router.delete('/:id', authenticateToken, deleteRecipe);
+router.get('/user/:userId', authenticateToken, getUserRecipes);
+
+// ==================== UPLOAD IMMAGINE ====================
 router.post('/:id/upload-image', 
   (req, res, next) => {
     upload.single('image')(req, res, async (err: any) => {
       if (err) {
         console.error('❌ Multer error:', err);
-        return res.status(400).json({ 
-          success: false, 
-          message: err.message 
-        });
+        return res.status(400).json({ success: false, message: err.message });
       }
-
-      // 🔥 Estrai token dall'header e verifica manualmente
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
       
       if (!token) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Token mancante' 
-        });
+        return res.status(401).json({ success: false, message: 'Token mancante' });
       }
 
       try {
@@ -78,10 +71,7 @@ router.post('/:id/upload-image',
         (req as any).user = decoded;
         next();
       } catch (error) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Token non valido' 
-        });
+        return res.status(403).json({ success: false, message: 'Token non valido' });
       }
     });
   },
