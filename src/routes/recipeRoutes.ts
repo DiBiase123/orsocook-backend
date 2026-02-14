@@ -56,19 +56,30 @@ router.put('/:id', authenticateToken, upload.single('image'), updateRecipe);
 router.delete('/:id', authenticateToken, deleteRecipe);
 router.get('/user/:userId', authenticateToken, getUserRecipes);
 
-// ==================== UPLOAD IMMAGINE CON GESTIONE ERRORI MULTER ====================
+// ==================== UPLOAD IMMAGINE CON DEBUG RAW ====================
 router.post('/:id/upload-image', 
-  authenticateToken, 
+  authenticateToken,
   (req, res, next) => {
-    // Middleware per gestire errori di Multer in modo centralizzato
+    // 🔥 DEBUG: cattura i dati raw
+    let data: Buffer[] = [];
+    req.on('data', chunk => {
+      data.push(chunk);
+      console.log(`📦 Chunk ricevuto: ${chunk.length} bytes`);
+    });
+    req.on('end', () => {
+      const total = Buffer.concat(data).length;
+      console.log(`📦📦📦 TOTALE BYTES RICEVUTI: ${total}`);
+      next();
+    });
+  },
+  (req, res, next) => {
+    // Middleware per gestire errori di Multer
     upload.single('image')(req, res, function (err: any) {
       if (err) {
-        // Stampa dettagliata dell'errore Multer
         console.error('❌❌❌ MULTER ERROR ❌❌❌');
         console.error('Codice Errore:', err.code);
         console.error('Messaggio:', err.message);
         console.error('Campo:', err.field);
-        console.error('Errore completo:', err);
         
         return res.status(400).json({
           success: false,
@@ -77,11 +88,9 @@ router.post('/:id/upload-image',
         });
       }
 
-      // Se non ci sono errori, controlla se il file esiste
       if (!req.file) {
-        console.warn('⚠️⚠️⚠️ req.file è undefined, ma nessun errore Multer è stato lanciato.');
-        console.warn('Content-Length:', req.headers['content-length']);
-        console.warn('Content-Type:', req.headers['content-type']);
+        console.warn('⚠️ req.file undefined dopo Multer');
+        console.warn('Content-Length header:', req.headers['content-length']);
       }
       
       next();
