@@ -9,6 +9,8 @@ import categoryRoutes from './routes/categoryRoutes';
 import authRoutes from './routes/authRoutes';
 import favoriteRoutes from './routes/favoriteRoutes';
 import commentRoutes from './routes/commentRoutes';
+import uploadRoutes from './routes/upload.routes';
+
 
 // Carica variabili ambiente
 dotenv.config();
@@ -46,6 +48,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/upload', uploadRoutes);
+
 
 // 404 handler
 app.use('*', (req, res) => {

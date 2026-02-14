@@ -1,5 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { getUploadSignature } from '../controllers/upload.controller';
+
 import {
   getRecipes,
   getRecipeById,
