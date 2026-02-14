@@ -333,7 +333,8 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
     
     const { 
       title, description, prepTime, cookTime, servings, difficulty,
-      isPublic, categoryId, ingredients, instructions, tags 
+      isPublic, categoryId, ingredients, instructions, tags,
+      imageUrl  // <-- AGGIUNGI QUESTO!
     } = req.body;
 
     const existingRecipe = await prisma.recipe.findUnique({
@@ -361,6 +362,11 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
     if (difficulty !== undefined) updateData.difficulty = difficulty;
     if (isPublic !== undefined) updateData.isPublic = isPublic === 'true' || isPublic === true;
     
+    // IMPORTANTE: AGGIUNGI imageUrl SE PRESENTE
+    if (imageUrl !== undefined) {
+      updateData.imageUrl = imageUrl;
+    }
+    
     if (categoryId !== undefined) {
       updateData.category = categoryId 
         ? { connect: { id: categoryId } }
@@ -370,9 +376,10 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
     if (ingredients !== undefined) updateData.ingredients = ingredients;
     if (instructions !== undefined) updateData.instructions = instructions;
 
+    // Upload file legacy (se presente)
     if (req.file?.buffer) {
       try {
-        Logger.debug('Uploading new image for recipe', { recipeId: id });
+        Logger.debug('Uploading new image for recipe (legacy)', { recipeId: id });
         updateData.imageUrl = await uploadImage(
           req.file.buffer, 
           req.file.mimetype, 
@@ -414,7 +421,7 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
       });
     }
 
-    Logger.info('Recipe updated', { recipeId: id, userId: req.user.id });
+    Logger.info('Recipe updated', { recipeId: id, userId: req.user.id, imageUrl: updateData.imageUrl });
     
     res.json({
       success: true,
@@ -430,7 +437,6 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
     });
   }
 }
-
 // DELETE /api/recipes/:id
 export async function deleteRecipe(req: AuthRequest, res: Response) {
   try {
