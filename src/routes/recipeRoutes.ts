@@ -1,4 +1,5 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { authenticateToken } from '../middleware/auth';
 import {
   getRecipes,
@@ -49,25 +50,41 @@ router.get('/:id', getRecipeById);
 router.get('/:id/likes', getRecipeLikesCount);
 router.get('/:id/comments', getRecipeComments);
 
-// ==================== PROTECTED ROUTES ====================
-// CRUD Ricette
-router.post('/', authenticateToken, upload.single('image'), createRecipe);
-router.put('/:id', authenticateToken, upload.single('image'), updateRecipe);
-router.delete('/:id', authenticateToken, deleteRecipe);
-router.get('/user/:userId', authenticateToken, getUserRecipes);
-
+// ==================== UPLOAD IMMAGINE - VERSIONE FINALE ====================
 router.post('/:id/upload-image', 
   (req, res, next) => {
-    // ⬅️ Prima Multer, POI authenticateToken
-    upload.single('image')(req, res, function (err: any) {
+    upload.single('image')(req, res, async (err: any) => {
       if (err) {
-        console.error('❌ MULTER ERROR:', err);
-        return res.status(400).json({ success: false, message: err.message });
+        console.error('❌ Multer error:', err);
+        return res.status(400).json({ 
+          success: false, 
+          message: err.message 
+        });
       }
-      next();
+
+      // 🔥 Estrai token dall'header e verifica manualmente
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Token mancante' 
+        });
+      }
+
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        (req as any).user = decoded;
+        next();
+      } catch (error) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Token non valido' 
+        });
+      }
     });
   },
-  authenticateToken,  // ✅ AUTENTICAZIONE DOPO MULTER!
   uploadRecipeImage
 );
 
