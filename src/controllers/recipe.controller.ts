@@ -227,14 +227,15 @@ export async function getRecipeById(req: Request, res: Response) {
   }
 }
 
-// POST /api/recipes
+/// POST /api/recipes
 export async function createRecipe(req: AuthRequest, res: Response) {
   try {
     Logger.debug('Creating recipe', { userId: req.user.id });
     
     const { 
       title, description, prepTime, cookTime, servings, difficulty,
-      isPublic = true, categoryId, ingredients = [], instructions = [], tags = [] 
+      isPublic = true, categoryId, ingredients = [], instructions = [], tags = [],
+      imageUrl // <-- AGGIUNTO: ricevi imageUrl dal body JSON
     } = req.body;
 
     if (!title || !description) {
@@ -247,11 +248,14 @@ export async function createRecipe(req: AuthRequest, res: Response) {
     const baseSlug = slugify(title, { lower: true });
     const uniqueSlug = `${baseSlug}-${Date.now()}`;
 
-    let imageUrl: string | undefined;
-    if (req.file?.buffer) {
+    // MODIFICATO: usa imageUrl dal body SE presente, altrimenti prova con file upload
+    let finalImageUrl: string | undefined = imageUrl;
+    
+    // Se non c'è imageUrl nel body ma c'è un file, fai upload legacy
+    if (!finalImageUrl && req.file?.buffer) {
       try {
-        Logger.debug('Uploading image for recipe');
-        imageUrl = await uploadImage(
+        Logger.debug('Uploading image for recipe (legacy method)');
+        finalImageUrl = await uploadImage(
           req.file.buffer, 
           req.file.mimetype, 
           req.file.originalname
@@ -271,7 +275,7 @@ export async function createRecipe(req: AuthRequest, res: Response) {
         title,
         description,
         slug: uniqueSlug,
-        imageUrl,
+        imageUrl: finalImageUrl, // <-- USA finalImageUrl
         prepTime: Number(prepTime) || 0,
         cookTime: Number(cookTime) || 0,
         servings: Number(servings) || 1,
@@ -304,7 +308,7 @@ export async function createRecipe(req: AuthRequest, res: Response) {
       });
     }
 
-    Logger.info('Recipe created', { recipeId: recipe.id, userId: req.user.id });
+    Logger.info('Recipe created', { recipeId: recipe.id, userId: req.user.id, imageUrl: finalImageUrl });
     
     res.status(201).json({
       success: true,
