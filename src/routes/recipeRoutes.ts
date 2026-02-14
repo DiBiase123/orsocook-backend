@@ -50,6 +50,23 @@ router.put('/:id', authenticateToken, upload.single('image'), updateRecipe);
 router.delete('/:id', authenticateToken, deleteRecipe);
 router.get('/user/:userId', authenticateToken, getUserRecipes);
 
+// ==================== DEBUG RAW BODY ====================
+router.use('/:id/upload-image', (req, res, next) => {
+  let data: Buffer[] = [];
+  req.on('data', chunk => {
+    data.push(chunk);
+    console.log(`📦 Chunk ricevuto: ${chunk.length} bytes`);
+  });
+  req.on('end', () => {
+    const total = Buffer.concat(data).length;
+    console.log(`📦📦📦 TOTALE BYTES RICEVUTI: ${total}`);
+    if (total === 0) {
+      console.error('❌❌❌ BODY VUOTO!');
+    }
+    next();
+  });
+});
+
 // ==================== UPLOAD IMMAGINE (semplificata come le altre) ====================
 router.post('/:id/upload-image', authenticateToken, upload.single('image'), uploadRecipeImage);
 
