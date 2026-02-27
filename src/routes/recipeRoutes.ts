@@ -1,27 +1,33 @@
 import express from 'express';
+import multer from 'multer';
 import { authenticateToken } from '../middleware/auth';
 import { getUploadSignature } from '../controllers/upload.controller';
-
 import {
+  // Core
   getRecipes,
   getRecipeById,
   createRecipe,
   updateRecipe,
   deleteRecipe,
   getUserRecipes,
+  
+  // Likes
   getRecipeLikesCount,
   checkRecipeLiked,
   addLikeToRecipe,
   removeLikeFromRecipe,
-  uploadRecipeImage,
+  checkRecipeFavorite,
+  
+  // Comments
   getRecipeComments,
   createComment,
   updateComment,
   deleteComment,
-  removeRecipeImage 
-} from '../controllers/recipe.controller';
-
-import multer from 'multer';
+  
+  // Images
+  uploadRecipeImage,
+  removeRecipeImage
+} from '../controllers/recipe';
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -69,7 +75,7 @@ router.use('/:id/upload-image', (req, res, next) => {
   });
 });
 
-// ==================== UPLOAD IMMAGINE (semplificata come le altre) ====================
+// ==================== UPLOAD IMMAGINE ====================
 router.post('/:id/upload-image', authenticateToken, upload.single('image'), uploadRecipeImage);
 
 // ==================== RIMOZIONE IMMAGINE ====================
@@ -79,8 +85,11 @@ router.delete('/:id/remove-image', authenticateToken, removeRecipeImage);
 router.get('/:id/liked', authenticateToken, checkRecipeLiked);
 router.post('/:id/like', authenticateToken, addLikeToRecipe);
 router.delete('/:id/like', authenticateToken, removeLikeFromRecipe);
+router.get('/:id/favorite/check', authenticateToken, checkRecipeFavorite);
 
 // ==================== COMMENTI ====================
 router.post('/:id/comments', authenticateToken, createComment);
+router.put('/comments/:commentId', authenticateToken, updateComment);
+router.delete('/comments/:commentId', authenticateToken, deleteComment);
 
 export default router;
