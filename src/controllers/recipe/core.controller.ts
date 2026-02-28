@@ -150,6 +150,11 @@ export async function createRecipe(req: AuthRequest, res: Response) {
       }
     });
 
+    // 👈 AGGIUNGI QUI I LOG
+console.log('🔍 RECIPE CREATA - categoryId dal body:', categoryId);
+console.log('🔍 RECIPE CREATA - categoryId salvato:', recipe.categoryId);
+console.log('🔍 RECIPE CREATA - ricetta completa:', recipe);
+
     if (tags?.length) {
       const processedTags = await processTags(tags);
       if (processedTags.length) {
@@ -198,6 +203,9 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
       isPublic, categoryId, ingredients, instructions, tags,
       imageUrl
     } = req.body;
+
+    // 👈 PRIMO LOG - COSA ARRIVA DAL FRONTEND
+    console.log('🔍 RECIPE UPDATE - categoryId dal body:', categoryId);
 
     const existingRecipe = await prisma.recipe.findUnique({
       where: { id },
@@ -252,7 +260,17 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
       }
     }
 
+    // 👈 SECONDO LOG - PRIMA DI SALVARE
+    console.log('🔍 RECIPE UPDATE - updateData prima del salvataggio:', updateData);
+
     await prisma.recipe.update({ where: { id }, data: updateData });
+
+    // 👈 TERZO LOG - DOPO IL SALVATAGGIO
+    const recipeDopo = await prisma.recipe.findUnique({
+      where: { id },
+      select: { id: true, title: true, categoryId: true }
+    });
+    console.log('🔍 RECIPE UPDATE - dopo salvataggio categoryId:', recipeDopo?.categoryId);
 
     if (tags !== undefined) {
       await prisma.recipeTag.deleteMany({ where: { recipeId: id } });

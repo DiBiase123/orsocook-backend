@@ -41,9 +41,26 @@ export async function getRecipeWithCounts(id: string) {
   const recipe = await prisma.recipe.findUnique({
     where: { id },
     include: {
-      author: { select: { id: true, username: true, email: true, avatarUrl: true } },
-      category: { select: { id: true, name: true, slug: true } },
-      tags: { include: { tag: true } }
+      author: { 
+        select: { 
+          id: true, 
+          username: true, 
+          email: true, 
+          avatarUrl: true 
+        } 
+      },
+      category: { // 👈 QUESTA PARTE C'È GIÀ
+        select: { 
+          id: true, 
+          name: true, 
+          slug: true 
+        }
+      },
+      tags: { 
+        include: { 
+          tag: true 
+        } 
+      }
     }
   });
 
@@ -53,6 +70,13 @@ export async function getRecipeWithCounts(id: string) {
     prisma.favorite.count({ where: { recipeId: id } }),
     prisma.like.count({ where: { recipeId: id } })
   ]);
+
+  // 👈 DEBUG: stampa cosa stai restituendo
+  console.log('🔍 Recipe with category:', {
+    id: recipe.id,
+    title: recipe.title,
+    category: recipe.category
+  });
 
   return {
     ...recipe,

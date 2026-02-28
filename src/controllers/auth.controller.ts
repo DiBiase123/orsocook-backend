@@ -161,13 +161,14 @@ export const registerWithVerification = async (req: Request, res: Response): Pro
       console.warn(`⚠️  Email di verifica non inviata per ${email}`);
     }
 
-    // NON generare token JWT - l'utente deve prima verificare l'email
+    // ✅ MODIFICATO: Aggiunto requiresVerification a livello root
     res.status(201).json({
       success: true,
       message: 'Registrazione completata! Verifica la tua email per attivare l\'account.',
+      requiresVerification: true,  // <-- AGGIUNTO QUI (livello root)
       data: { 
         user,
-        requiresVerification: true,
+        requiresVerification: true,  // <-- MANTENUTO PER BACKWARD COMPATIBILITY
         emailSent
       }
     });
@@ -283,16 +284,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Controlla se l'email è verificata
-    if (!user.isVerified) {
-      res.status(403).json({ 
-        success: false, 
-        message: 'Devi verificare la tua email prima di accedere.',
-        requiresVerification: true,
-        email: user.email
-      });
-      return;
+if (!user.isVerified) {
+  res.status(403).json({ 
+    success: false, 
+    message: 'Devi verificare la tua email prima di accedere.',
+    requiresVerification: true,      // <-- MANTENUTO A LIVELLO ROOT
+    data: {                           // <-- AGGIUNTO BLOcco data
+      requiresVerification: true,
+      email: user.email
     }
-
+  });
+  return;
+}
     // Verifica password
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     

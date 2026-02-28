@@ -1,42 +1,19 @@
 import express from 'express'
-import { PrismaClient } from '@prisma/client'
+import { 
+  getCategories, 
+  createCategory,
+  seedCategories 
+} from '../controllers/category.controller'
 
 const router = express.Router()
-const prisma = new PrismaClient()
 
 // GET /api/categories - Tutte le categorie
-router.get('/', async (req, res) => {
-  try {
-    const categories = await prisma.category.findMany({
-      include: {
-        _count: {
-          select: { recipes: true }
-        }
-      },
-      orderBy: { name: 'asc' }
-    })
-    
-    const categoriesWithCount = categories.map(cat => ({
-      ...cat,
-      recipeCount: cat._count.recipes,
-      createdAt: cat.createdAt.toISOString(),
-      updatedAt: cat.updatedAt.toISOString()
-    }))
-    
-    // Rimuovi _count
-    categoriesWithCount.forEach(cat => delete (cat as any)._count)
-    
-    res.json({
-      success: true,
-      data: categoriesWithCount
-    })
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Errore interno del server'
-    })
-  }
-})
+router.get('/', getCategories)
+
+// POST /api/categories - Crea una nuova categoria
+router.post('/', createCategory)
+
+// POST /api/categories/seed - Crea categorie di default
+router.post('/seed', seedCategories)
 
 export default router
