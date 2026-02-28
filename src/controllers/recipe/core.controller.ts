@@ -20,53 +20,101 @@ export async function getRecipes(req: Request, res: Response) {
     const limitNum = Number(limit) || 10;
     const skip = (pageNum - 1) * limitNum;
 
-    const where: any = { isPublic: true };
-    if (category) where.category = { slug: String(category) };
-    
-// 👈 MODIFICHIAMO LA RICERCA PER INCLUDERE TAG E INGREDIENTI
-if (search) {
-  const searchString = String(search);
-  where.OR = [
-    { title: { contains: searchString, mode: 'insensitive' } },
-    { description: { contains: searchString, mode: 'insensitive' } },
-    // Ricerca nei TAG
-    {
-      tags: {
-        some: {
-          tag: {
-            name: { contains: searchString, mode: 'insensitive' }
-          }
-        }
-      }
-    },
-    // Ricerca negli INGREDIENTI (JSONB)
-    {
-      ingredients: {
-        path: '$',
-        array_contains: [
-          { name: { contains: searchString, mode: 'insensitive' } }
-        ]
-      }
-    }
-  ];
-}
+    // Costruisci la query SQL base
+    let sqlQuery = `
+      SELECT r.*, 
+             row_to_json(a) as author,
+             row_to_json(c) as category,
+             COALESCE(
+               json_agg(
+                 json_build_object('tag', row_to_json(t.*))
+               ) FILTER (WHERE t.id IS NOT NULL), 
+               '[]'
+             ) as tags
+      FROM recipes r
+      LEFT JOIN users a ON r."authorId" = a.id
+      LEFT JOIN categories c ON r."categoryId" = c.id
+      LEFT JOIN recipe_tags rt ON r.id = rt."recipeId"
+      LEFT JOIN tags t ON rt."tagId" = t.id
+      WHERE r."isPublic" = true
+    `;
 
-    const [total, recipes] = await Promise.all([
-      prisma.recipe.count({ where }),
-      prisma.recipe.findMany({
-        where,
-        skip,
-        take: limitNum,
-        include: {
-          author: { select: { id: true, username: true, email: true, avatarUrl: true } },
-          category: { select: { id: true, name: true, slug: true } },
-          tags: { include: { tag: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-      })
+    const queryParams: any[] = [];
+    let paramIndex = 1;
+
+    // Aggiungi filtro categoria
+    if (category) {
+      sqlQuery += ` AND c.slug = $${paramIndex}`;
+      queryParams.push(String(category));
+      paramIndex++;
+    }
+
+    // Aggiungi ricerca
+    if (search) {
+      const searchString = String(search);
+      console.log('🔍 BACKEND - Ricerca per:', searchString);
+      
+      sqlQuery += ` AND (
+        r.title ILIKE $${paramIndex} OR
+        r.description ILIKE $${paramIndex} OR
+        EXISTS (
+          SELECT 1 FROM recipe_tags rt2
+          JOIN tags t2 ON rt2."tagId" = t2.id
+          WHERE rt2."recipeId" = r.id AND t2.name ILIKE $${paramIndex}
+        ) OR
+        EXISTS (
+          SELECT 1 FROM jsonb_array_elements(r.ingredients) AS ing
+          WHERE ing->>'name' ILIKE $${paramIndex}
+        )
+      )`;
+      queryParams.push(`%${searchString}%`);
+      paramIndex++;
+    }
+
+    // Aggiungi GROUP BY e ORDER BY
+    sqlQuery += ` GROUP BY r.id, a.id, c.id ORDER BY r."createdAt" DESC`;
+
+    // Query per il conteggio totale
+    let countQuery = `SELECT COUNT(DISTINCT r.id) as total FROM recipes r WHERE r."isPublic" = true`;
+    
+    if (category) {
+      countQuery += ` AND EXISTS (SELECT 1 FROM categories c WHERE r."categoryId" = c.id AND c.slug = $1)`;
+    }
+    
+    if (search) {
+      const searchParam = category ? 2 : 1;
+      countQuery += ` AND (
+        r.title ILIKE $${searchParam} OR
+        r.description ILIKE $${searchParam} OR
+        EXISTS (
+          SELECT 1 FROM recipe_tags rt2
+          JOIN tags t2 ON rt2."tagId" = t2.id
+          WHERE rt2."recipeId" = r.id AND t2.name ILIKE $${searchParam}
+        ) OR
+        EXISTS (
+          SELECT 1 FROM jsonb_array_elements(r.ingredients) AS ing
+          WHERE ing->>'name' ILIKE $${searchParam}
+        )
+      )`;
+    }
+
+    // Esegui le query
+    const [recipes, totalResult] = await Promise.all([
+      prisma.$queryRawUnsafe(sqlQuery + ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`, 
+        ...queryParams, limitNum, skip),
+      prisma.$queryRawUnsafe(countQuery, ...queryParams)
     ]);
 
-    const recipesWithCounts = await addCountsToRecipes(recipes);
+    const total = Number(totalResult[0]?.total || 0);
+
+    // Processa le ricette per formattare i tags
+    const processedRecipes = (recipes as any[]).map(recipe => ({
+      ...recipe,
+      tags: recipe.tags?.filter((t: any) => t.tag).map((t: any) => t.tag) || []
+    }));
+
+    // Aggiungi conteggi (like, favorite, comment)
+    const recipesWithCounts = await addCountsToRecipes(processedRecipes);
 
     res.json({
       success: true,
@@ -80,6 +128,7 @@ if (search) {
         }
       }
     });
+
   } catch (error) {
     Logger.error('Error fetching recipes', error);
     res.status(500).json({ 
@@ -172,10 +221,8 @@ export async function createRecipe(req: AuthRequest, res: Response) {
       }
     });
 
-    // 👈 AGGIUNGI QUI I LOG
-console.log('🔍 RECIPE CREATA - categoryId dal body:', categoryId);
-console.log('🔍 RECIPE CREATA - categoryId salvato:', recipe.categoryId);
-console.log('🔍 RECIPE CREATA - ricetta completa:', recipe);
+    console.log('🔍 RECIPE CREATA - categoryId dal body:', categoryId);
+    console.log('🔍 RECIPE CREATA - categoryId salvato:', recipe.categoryId);
 
     if (tags?.length) {
       const processedTags = await processTags(tags);
@@ -226,7 +273,6 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
       imageUrl
     } = req.body;
 
-    // 👈 PRIMO LOG - COSA ARRIVA DAL FRONTEND
     console.log('🔍 RECIPE UPDATE - categoryId dal body:', categoryId);
 
     const existingRecipe = await prisma.recipe.findUnique({
@@ -282,12 +328,10 @@ export async function updateRecipe(req: AuthRequest, res: Response) {
       }
     }
 
-    // 👈 SECONDO LOG - PRIMA DI SALVARE
     console.log('🔍 RECIPE UPDATE - updateData prima del salvataggio:', updateData);
 
     await prisma.recipe.update({ where: { id }, data: updateData });
 
-    // 👈 TERZO LOG - DOPO IL SALVATAGGIO
     const recipeDopo = await prisma.recipe.findUnique({
       where: { id },
       select: { id: true, title: true, categoryId: true }
