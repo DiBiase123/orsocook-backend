@@ -22,10 +22,22 @@ export async function getRecipes(req: Request, res: Response) {
 
     const where: any = { isPublic: true };
     if (category) where.category = { slug: String(category) };
+    
+    // 👈 MODIFICHIAMO LA RICERCA PER INCLUSIONE TAG
     if (search) {
       where.OR = [
         { title: { contains: String(search), mode: 'insensitive' } },
-        { description: { contains: String(search), mode: 'insensitive' } }
+        { description: { contains: String(search), mode: 'insensitive' } },
+        // 👈 AGGIUNGIAMO RICERCA NEI TAG
+        {
+          tags: {
+            some: {
+              tag: {
+                name: { contains: String(search), mode: 'insensitive' }
+              }
+            }
+          }
+        }
       ];
     }
 
