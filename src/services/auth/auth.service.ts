@@ -11,7 +11,7 @@ import {
 } from '../../utils/auth/security.utils';
 import { sanitizeUser } from '../../utils/auth/sanitize.utils';
 import { generateTokens } from '../../utils/auth/token.utils';
-import { emailService } from '../email.service';
+import { emailService } from '../email';
 import { sessionService } from './session.service';  // <-- AGGIUNTA IMPORT
 
 const prisma = new PrismaClient();

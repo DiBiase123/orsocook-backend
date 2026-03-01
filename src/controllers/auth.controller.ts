@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { uploadImageToCloudinary } from '../services/cloudinary.service';
-import { emailService } from '../services/email.service';
+import { emailService } from '../services/email';
 import crypto from 'crypto';
 
 const prisma = new PrismaClient();
