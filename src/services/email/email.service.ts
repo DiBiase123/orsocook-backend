@@ -67,22 +67,24 @@ export class EmailService {
     return 'https://dibiase123.github.io/orsocook';
   }
 
-  async sendVerificationEmail(email: string, token: string, username: string): Promise<boolean> {
-    const verificationUrl = `${this.frontendUrl}/verify-email?token=${token}`;
-    
-    const html = getVerificationEmailHtml(username, verificationUrl, this.frontendUrl);
-    const text = getVerificationEmailText(username, verificationUrl);
+ async sendVerificationEmail(email: string, token: string, username: string): Promise<boolean> {
+  // Usa l'URL di produzione per il frontend
+  const verificationUrl = `https://dibiase123.github.io/orsocook-frontend/#/verify-email?token=${token}`;
+  
+  const html = getVerificationEmailHtml(username, verificationUrl, this.frontendUrl);
+  const text = getVerificationEmailText(username, verificationUrl);
 
-    return this.sendEmail({
-      to: email,
-      subject: '🐻 Conferma la tua email per OrsoCook',
-      html,
-      text,
-    });
-  }
+  return this.sendEmail({
+    to: email,
+    subject: '🐻 Conferma la tua email per OrsoCook',
+    html,
+    text,
+  });
+}
 
   async sendPasswordResetEmail(email: string, token: string, username: string): Promise<boolean> {
-    const resetUrl = `${this.frontendUrl}/reset-password?token=${token}`;
+    // CORRETTO: usa FRONTEND_URL con hash routing
+    const resetUrl = `${this.frontendUrl}/#/reset-password?token=${token}`;
     
     const html = getResetPasswordEmailHtml(username, resetUrl);
     const text = `Reimposta la tua password: ${resetUrl}`;
@@ -144,7 +146,7 @@ export class EmailService {
       });
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ DEBUG - Errore dettagliato:', {
         message: error.message,
         stack: error.stack,
