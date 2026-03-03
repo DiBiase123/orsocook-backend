@@ -10,9 +10,9 @@ import {
   incrementLoginAttempts
 } from '../../utils/auth/security.utils';
 import { sanitizeUser } from '../../utils/auth/sanitize.utils';
-import { generateTokens } from '../../utils/auth/token.utils';
+import { generateTokens, verifyRefreshToken } from '../../utils/auth/token.utils';
 import { emailService } from '../email';
-import { sessionService } from './session.service';  // <-- AGGIUNTA IMPORT
+import { sessionService } from './session.service';
 
 const prisma = new PrismaClient();
 
@@ -25,8 +25,8 @@ export interface RegisterData {
 export interface LoginData {
   email: string;
   password: string;
-  userAgent?: string;  // <-- AGGIUNTO
-  ipAddress?: string;  // <-- AGGIUNTO
+  userAgent?: string;
+  ipAddress?: string;
 }
 
 export interface AuthResult {
@@ -306,7 +306,7 @@ export class AuthService {
       const tokens = generateTokens(user);
       const userData = sanitizeUser(user);
 
-      // Usa SessionService per gestire la sessione (CON NUOVI CAMPI)
+      // Usa SessionService per gestire la sessione
       await sessionService.createOrUpdateSession({
         userId: user.id,
         refreshToken: tokens.refreshToken,
@@ -329,6 +329,40 @@ export class AuthService {
       return {
         success: false,
         message: 'Errore durante il login',
+        statusCode: 500
+      };
+    }
+  }
+
+  /**
+   * Refresh token - usa SessionService.refreshAccessToken
+   */
+  async refreshToken(refreshToken: string): Promise<AuthResult> {
+    try {
+      const result = await sessionService.refreshAccessToken(refreshToken);
+      
+      if (result.success && result.data) {
+        return {
+          success: true,
+          message: result.message,
+          data: {
+            token: result.data.accessToken,
+            user: result.data.user
+          },
+          statusCode: 200
+        };
+      } else {
+        return {
+          success: false,
+          message: result.message,
+          statusCode: result.statusCode || 401
+        };
+      }
+    } catch (error) {
+      console.error('AuthService - refreshToken error:', error);
+      return {
+        success: false,
+        message: 'Errore durante il refresh del token',
         statusCode: 500
       };
     }
@@ -531,7 +565,29 @@ export class AuthService {
       console.error('AuthService - resendVerificationEmail error:', error);
       return {
         success: false,
-message: 'Errore durante l\'invio della nuova email di verifica',
+        message: 'Errore durante l\'invio della nuova email di verifica',
+        statusCode: 500
+      };
+    }
+  }
+
+  /**
+   * Logout
+   */
+  async logout(token: string): Promise<AuthResult> {
+    try {
+      await sessionService.deleteSessionByToken(token);
+      
+      return {
+        success: true,
+        message: 'Logout effettuato con successo',
+        statusCode: 200
+      };
+    } catch (error) {
+      console.error('AuthService - logout error:', error);
+      return {
+        success: false,
+        message: 'Errore durante il logout',
         statusCode: 500
       };
     }
