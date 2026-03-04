@@ -10,7 +10,7 @@ import {
   incrementLoginAttempts
 } from '../../utils/auth/security.utils';
 import { sanitizeUser } from '../../utils/auth/sanitize.utils';
-import { generateTokens, verifyRefreshToken } from '../../utils/auth/token.utils';
+import { generateTokens, verifyRefreshToken, generateRefreshToken } from '../../utils/auth/token.utils';
 import { emailService } from '../email';
 import { sessionService } from './session.service';
 
@@ -335,38 +335,48 @@ export class AuthService {
   }
 
   /**
-   * Refresh token - usa SessionService.refreshAccessToken
-   */
-  async refreshToken(refreshToken: string): Promise<AuthResult> {
-    try {
-      const result = await sessionService.refreshAccessToken(refreshToken);
+ * Refresh token - usa SessionService.refreshAccessToken
+ */
+async refreshToken(refreshToken: string): Promise<AuthResult> {
+  try {
+    const result = await sessionService.refreshAccessToken(refreshToken);
+    
+    if (result.success && result.data) {
+      // Genera un NUOVO refresh token (rotazione)
+      const newRefreshToken = generateRefreshToken(result.data.user.id);
       
-      if (result.success && result.data) {
-        return {
-          success: true,
-          message: result.message,
-          data: {
-            token: result.data.accessToken,
-            user: result.data.user
-          },
-          statusCode: 200
-        };
-      } else {
-        return {
-          success: false,
-          message: result.message,
-          statusCode: result.statusCode || 401
-        };
-      }
-    } catch (error) {
-      console.error('AuthService - refreshToken error:', error);
+      // Aggiorna la sessione con il nuovo refresh token
+      await sessionService.updateSessionRefreshToken(
+        result.data.user.id,
+        newRefreshToken
+      );
+      
+      return {
+        success: true,
+        message: result.message,
+        data: {
+          token: result.data.accessToken,
+          refreshToken: newRefreshToken,
+          user: result.data.user
+        },
+        statusCode: 200
+      };
+    } else {
       return {
         success: false,
-        message: 'Errore durante il refresh del token',
-        statusCode: 500
+        message: result.message,
+        statusCode: result.statusCode || 401
       };
     }
+  } catch (error) {
+    console.error('AuthService - refreshToken error:', error);
+    return {
+      success: false,
+      message: 'Errore durante il refresh del token',
+      statusCode: 500
+    };
   }
+}
 
   /**
    * Richiesta reset password

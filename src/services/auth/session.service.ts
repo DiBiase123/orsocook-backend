@@ -11,8 +11,8 @@ const prisma = new PrismaClient();
 export interface SessionData {
   userId: string;
   refreshToken: string;
-  userAgent?: string;      // <-- AGGIUNTO
-  ipAddress?: string;      // <-- AGGIUNTO
+  userAgent?: string;
+  ipAddress?: string;
 }
 
 export interface RefreshResult {
@@ -40,8 +40,8 @@ export class SessionService {
     const sessionDataToUpdate = {
       refreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 giorni
-      ...(userAgent !== undefined && { userAgent }),  // <-- AGGIUNTO
-      ...(ipAddress !== undefined && { ipAddress })   // <-- AGGIUNTO
+      ...(userAgent !== undefined && { userAgent }),
+      ...(ipAddress !== undefined && { ipAddress })
     };
 
     if (existingSession) {
@@ -58,6 +58,23 @@ export class SessionService {
           ...sessionDataToUpdate
         }
       });
+    }
+  }
+
+  /**
+   * Aggiorna il refresh token di una sessione (NUOVO)
+   */
+  async updateSessionRefreshToken(userId: string, newRefreshToken: string): Promise<void> {
+    try {
+      await prisma.session.updateMany({
+        where: { userId },
+        data: { 
+          refreshToken: newRefreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Reset scadenza
+        }
+      });
+    } catch (error) {
+      console.error('SessionService - updateSessionRefreshToken error:', error);
     }
   }
 
@@ -192,10 +209,10 @@ export class SessionService {
       return sessions.map(session => ({
         id: session.id,
         createdAt: session.createdAt,
-        updatedAt: session.updatedAt,    // <-- AGGIUNTO
+        updatedAt: session.updatedAt,
         expiresAt: session.expiresAt,
-        userAgent: session.userAgent,    // <-- AGGIUNTO
-        ipAddress: session.ipAddress     // <-- AGGIUNTO
+        userAgent: session.userAgent,
+        ipAddress: session.ipAddress
       }));
     } catch (error) {
       console.error('SessionService - getUserSessions error:', error);
