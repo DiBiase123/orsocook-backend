@@ -380,10 +380,11 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // Per sicurezza, non rivelare se l'email esiste
-      res.json({
-        success: true,
-        message: 'Se l\'email è registrata, riceverai istruzioni per il reset'
+      // ✅ MODIFICATO: messaggio specifico per email non trovata
+      res.status(404).json({ 
+        success: false, 
+        message: 'Email non registrata',
+        data: { emailNotFound: true }
       });
       return;
     }
@@ -407,7 +408,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     res.json({
       success: true,
-      message: 'Se l\'email è registrata, riceverai istruzioni per il reset',
+      message: 'Email inviata! Controlla la tua casella di posta.',
       data: { emailSent }
     });
   } catch (error) {

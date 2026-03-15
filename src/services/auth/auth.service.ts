@@ -379,61 +379,62 @@ async refreshToken(refreshToken: string): Promise<AuthResult> {
 }
 
   /**
-   * Richiesta reset password
-   */
-  async forgotPassword(email: string): Promise<AuthResult> {
-    try {
-      if (!email) {
-        return {
-          success: false,
-          message: 'Email obbligatoria',
-          statusCode: 400
-        };
-      }
-
-      const user = await prisma.user.findUnique({ where: { email } });
-
-      if (!user) {
-        // Per sicurezza, non rivelare se l'email esiste
-        return {
-          success: true,
-          message: 'Se l\'email è registrata, riceverai istruzioni per il reset',
-          data: { emailSent: false }
-        };
-      }
-
-      // Genera token di reset
-      const resetToken = generateRandomToken();
-      const resetTokenExpiry = new Date(Date.now() + SECURITY_CONSTANTS.RESET_TOKEN_EXPIRY_MS);
-
-      // Salva token nel database
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { resetToken, resetTokenExpiry }
-      });
-
-      // Invia email di reset
-      const emailSent = await emailService.sendPasswordResetEmail(
-        email,
-        resetToken,
-        user.username
-      );
-
-      return {
-        success: true,
-        message: 'Se l\'email è registrata, riceverai istruzioni per il reset',
-        data: { emailSent }
-      };
-
-    } catch (error) {
-      console.error('AuthService - forgotPassword error:', error);
+ * Richiesta reset password
+ */
+async forgotPassword(email: string): Promise<AuthResult> {
+  try {
+    if (!email) {
       return {
         success: false,
-        message: 'Errore durante la richiesta di reset password',
-        statusCode: 500
+        message: 'Email obbligatoria',
+        statusCode: 400
       };
     }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // ✅ MODIFICATO: restituisci errore specifico
+      return {
+        success: false,
+        message: 'Email non registrata',
+        statusCode: 404,
+        data: { emailNotFound: true }
+      };
+    }
+
+    // Genera token di reset
+    const resetToken = generateRandomToken();
+    const resetTokenExpiry = new Date(Date.now() + SECURITY_CONSTANTS.RESET_TOKEN_EXPIRY_MS);
+
+    // Salva token nel database
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken, resetTokenExpiry }
+    });
+
+    // Invia email di reset
+    const emailSent = await emailService.sendPasswordResetEmail(
+      email,
+      resetToken,
+      user.username
+    );
+
+    return {
+      success: true,
+      message: 'Email inviata! Controlla la tua casella di posta.',
+      data: { emailSent }
+    };
+
+  } catch (error) {
+    console.error('AuthService - forgotPassword error:', error);
+    return {
+      success: false,
+      message: 'Errore durante la richiesta di reset password',
+      statusCode: 500
+    };
   }
+}
 
   /**
    * Reset password
