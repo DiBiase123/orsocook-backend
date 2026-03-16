@@ -5,7 +5,7 @@ import Logger from '../../../utils/logger';
 import { 
   validateRecipeExists, 
   validateRecipeOwnership 
-} from '../validators/recipe.validators';
+} from '../validators/recipe_validators';
 
 const prisma = new PrismaClient();
 

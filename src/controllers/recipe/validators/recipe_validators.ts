@@ -1,4 +1,4 @@
-// app_ricette_backend/src/controllers/recipe/validators/recipe.validators.ts
+// app_ricette_backend/src/controllers/recipe/validators/recipe_validators.ts
 
 export interface ValidationResult {
   valid: boolean;

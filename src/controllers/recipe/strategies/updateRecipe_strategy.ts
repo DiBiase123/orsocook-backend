@@ -8,13 +8,13 @@ import {
   processTags, 
   getRecipeWithCounts, 
   uploadImage 
-} from '../recipe.helpers';
+} from '../recipe_helpers';
 import { 
   validateRecipeExists, 
   validateRecipeOwnership,
   validateRequiredFields,
   validateNumericFields 
-} from '../validators/recipe.validators';
+} from '../validators/recipe_validators';
 
 const prisma = new PrismaClient();
 

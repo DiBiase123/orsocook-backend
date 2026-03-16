@@ -1,4 +1,4 @@
-// app_ricette_backend/src/controllers/index.ts
-export { authController } from './auth/auth.controller';
-export { profileController } from './profile/profile.controller';
-export { sessionsController } from './auth/sessions.controller';
+export { default as authController } from './auth/auth_controller';
+export * from './recipe/recipe_controller';
+export * from './category_controller';
+export * from './upload_controller';

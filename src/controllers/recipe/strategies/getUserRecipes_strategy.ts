@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../../../middleware/auth';
 import Logger from '../../../utils/logger';
-import { addCountsToRecipes } from '../recipe.helpers';
+import { addCountsToRecipes } from '../recipe_helpers';
 
 const prisma = new PrismaClient();
 

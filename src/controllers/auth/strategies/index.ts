@@ -1,0 +1,16 @@
+export { registerStrategy } from './register_strategy';
+export { loginStrategy } from './login_strategy';
+export { verifyEmailStrategy } from './verifyEmail_strategy';
+export { forgotPasswordStrategy } from './forgotPassword_strategy';
+export { resetPasswordStrategy } from './resetPassword_strategy';
+export { resendVerificationStrategy } from './resendVerification_strategy';
+export { refreshTokenStrategy } from './refreshToken_strategy';
+export { logoutStrategy } from './logout_strategy';
+export { getCurrentUserStrategy } from './getCurrentUser_strategy';
+export { getUserProfileStrategy } from './getUserProfile_strategy';
+export { updateAvatarStrategy } from './updateAvatar_strategy';
+export { getUserSessionsStrategy } from './getUserSessions_strategy';
+export { deleteSessionStrategy } from './deleteSession_strategy';
+export { logoutAllStrategy } from './logoutAll_strategy';
+export { updateProfileStrategy } from './updateProfile_strategy';
+export { deleteAccountStrategy } from './deleteAccount_strategy';

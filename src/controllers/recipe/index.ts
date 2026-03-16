@@ -1,11 +1,11 @@
 // Core CRUD
-export * from './core.controller';
+export * from './recipe_controller';
 
 // Like operations
-export * from './like.controller';
+export * from './like_controller';
 
 // Comment operations
-export * from './comment.controller';
+export * from './comment_controller';
 
 // Image operations
-export * from './image.controller';
+export * from './image_controller';

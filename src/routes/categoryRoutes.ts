@@ -3,7 +3,7 @@ import {
   getCategories, 
   createCategory,
   seedCategories 
-} from '../controllers/category.controller'
+} from '../controllers/category_controller'
 
 const router = express.Router()
 

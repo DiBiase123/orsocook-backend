@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { getUploadSignature } from '../controllers/upload.controller';
+import { getUploadSignature } from '../controllers/upload_controller';
 
 const router = express.Router();
 

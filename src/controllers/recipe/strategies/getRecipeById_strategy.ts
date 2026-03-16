@@ -3,7 +3,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import Logger from '../../../utils/logger';
-import { getRecipeWithCounts } from '../recipe.helpers';
+import { getRecipeWithCounts } from '../recipe_helpers';
 
 const prisma = new PrismaClient();
 

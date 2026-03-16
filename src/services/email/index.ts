@@ -1,2 +1,2 @@
-export { EmailService, emailService } from './email.service';
-export type { EmailOptions } from './email.service';
+export { EmailService, emailService } from './email_service';
+export type { EmailOptions } from './email_service';

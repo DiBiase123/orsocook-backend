@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth';
-import { getUploadSignature } from '../controllers/upload.controller';
+import { getUploadSignature } from '../controllers/upload_controller';
 import {
   // Core
   getRecipes,

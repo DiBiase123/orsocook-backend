@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import slugify from 'slugify';
-import { uploadImageToCloudinary } from '../../services/cloudinary.service';
+import { uploadImageToCloudinary } from '../../services/cloudinary_service';
 import Logger from '../../utils/logger';
 
 const prisma = new PrismaClient();

@@ -2,4 +2,4 @@
 export * from './auth';
 export * from './user';
 export { emailService } from './email';
-export { uploadImageToCloudinary } from './cloudinary.service';
+export { uploadImageToCloudinary } from './cloudinary_service';

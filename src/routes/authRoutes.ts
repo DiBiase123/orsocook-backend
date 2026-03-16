@@ -1,11 +1,6 @@
-// app_ricette_backend/src/routes/authRoutes.ts
 import express from 'express';
 import multer from 'multer';
-import { 
-  authController,
-  profileController,
-  sessionsController 
-} from '../controllers';
+import { authController } from '../controllers';
 import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
@@ -31,8 +26,6 @@ const avatarUpload = multer({
 // Registrazione con verifica email
 router.post('/register', (req: express.Request, res: express.Response) => 
   authController.register(req, res));
-router.post('/register-with-verification', (req: express.Request, res: express.Response) => 
-  authController.register(req, res));
 
 // Login
 router.post('/login', (req: express.Request, res: express.Response) => 
@@ -40,11 +33,11 @@ router.post('/login', (req: express.Request, res: express.Response) =>
 
 // Refresh token
 router.post('/refresh', (req: express.Request, res: express.Response) => 
-  sessionsController.refresh(req, res));
+  authController.refresh(req, res));
 
 // Logout
 router.post('/logout', (req: express.Request, res: express.Response) => 
-  sessionsController.logout(req, res));
+  authController.logout(req, res));
 
 // Verifica email
 router.get('/verify-email/:token', (req: express.Request, res: express.Response) => 
@@ -60,39 +53,42 @@ router.post('/reset-password/:token', (req: express.Request, res: express.Respon
 
 // Rinvia email di verifica
 router.post('/resend-verification', (req: express.Request, res: express.Response) => 
-  authController.resendVerificationEmail(req, res));
+  authController.resendVerification(req, res));
 
 // ==================== PROTECTED ROUTES ====================
 
+// Middleware autenticazione per tutte le route successive
+router.use(authenticateToken);
+
 // Get current user
-router.get('/me', authenticateToken, (req: any, res: express.Response) => 
-  profileController.getCurrentUser(req, res));
+router.get('/me', (req: any, res: express.Response) => 
+  authController.getCurrentUser(req, res));
 
 // Get user profile
-router.get('/profile/:userId', authenticateToken, (req: any, res: express.Response) => 
-  profileController.getUserProfile(req, res));
+router.get('/profile/:userId', (req: any, res: express.Response) => 
+  authController.getUserProfile(req, res));
 
 // Session management
-router.get('/sessions', authenticateToken, (req: any, res: express.Response) => 
-  sessionsController.getUserSessions(req, res));
-router.delete('/sessions/:sessionId', authenticateToken, (req: any, res: express.Response) => 
-  sessionsController.deleteSession(req, res));
-router.post('/logout-all', authenticateToken, (req: any, res: express.Response) => 
-  sessionsController.logoutAll(req, res));
+router.get('/sessions', (req: any, res: express.Response) => 
+  authController.getUserSessions(req, res));
+
+router.delete('/sessions/:sessionId', (req: any, res: express.Response) => 
+  authController.deleteSession(req, res));
+
+router.post('/logout-all', (req: any, res: express.Response) => 
+  authController.logoutAll(req, res));
 
 // Update profile
-router.put('/profile', authenticateToken, (req: any, res: express.Response) => 
-  profileController.updateProfile(req, res));
+router.put('/profile', (req: any, res: express.Response) => 
+  authController.updateProfile(req, res));  // <-- RIMOSSO TERNARIO
 
 // Delete account
-router.delete('/account', authenticateToken, (req: any, res: express.Response) => 
-  profileController.deleteAccount(req, res));
+router.delete('/account', (req: any, res: express.Response) => 
+  authController.deleteAccount(req, res));  // <-- RIMOSSO TERNARIO
 
 // Avatar upload
 router.put(
   '/avatar', 
-  authenticateToken,
-  
   // MIDDLEWARE DEBUG 1
   (req: any, res: any, next: any) => {
     console.log('🔍 [MULTER DEBUG 1] Avatar upload request received');
@@ -128,7 +124,7 @@ router.put(
     next();
   },
   
-  (req: any, res: express.Response) => profileController.updateAvatar(req, res)
+  (req: any, res: express.Response) => authController.updateAvatar(req, res)
 );
 
 export default router;

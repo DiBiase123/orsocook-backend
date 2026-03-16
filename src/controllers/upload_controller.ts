@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { generateUploadSignature } from '../services/cloudinaryUpload.service';
+import { generateUploadSignature } from '../services/cloudinary_upload_service';
+
 
 export const getUploadSignature = (req: Request, res: Response) => {
   try {

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { SECURITY_CONSTANTS } from './security.constants';
+import { SECURITY_CONSTANTS } from './security_constants';
 
 const prisma = new PrismaClient();
 

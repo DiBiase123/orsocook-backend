@@ -4,7 +4,7 @@ import {
   verifyRefreshToken, 
   generateAccessToken,
   TokenPayload 
-} from '../../utils/auth/token.utils';
+} from '../../utils/auth/token_utils';
 
 const prisma = new PrismaClient();
 

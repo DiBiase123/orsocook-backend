@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { uploadImageToCloudinary } from '../cloudinary_service';
 import { sanitizeUser } from '../../utils/auth/sanitize_utils';
-
 const prisma = new PrismaClient();
 
 export interface UpdateAvatarData {

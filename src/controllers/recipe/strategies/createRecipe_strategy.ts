@@ -9,8 +9,8 @@ import {
   getRecipeWithCounts, 
   uploadImage,
   generateUniqueSlug 
-} from '../recipe.helpers';
-import { validateRequiredFields, validateNumericFields } from '../validators/recipe.validators';
+} from '../recipe_helpers';
+import { validateRequiredFields, validateNumericFields } from '../validators/recipe_validators';
 
 const prisma = new PrismaClient();
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Logger from '../../../utils/logger';
-import { getRecipesWithFilters } from '../queries/recipe.queries';
-import { addCountsToRecipes } from '../recipe.helpers';
+import { getRecipesWithFilters } from '../queries/recipe_queries';
+import { addCountsToRecipes } from '../recipe_helpers';
 
 export async function getRecipesStrategy(req: Request, res: Response) {
   try {

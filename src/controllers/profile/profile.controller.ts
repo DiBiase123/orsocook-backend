@@ -1,6 +1,6 @@
 // app_ricette_backend/src/controllers/profile/profile.controller.ts
 import { Request, Response } from 'express';
-import { userService } from '../../services/user/user.service';
+import { userService } from '../../services/user/user_service';
 
 /**
  * Controller per la gestione del profilo utente
