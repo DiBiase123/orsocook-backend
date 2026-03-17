@@ -1,11 +1,11 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { AuthRequest } from '../../../middleware/auth';
-import Logger from '../../../utils/logger';
-import { uploadImageToCloudinary } from '../../../services/cloudinary_service';
+import { AuthRequest } from '@middleware/auth';                    
+import Logger from '@utils/logger';                                
+import { uploadImageToCloudinary } from '@services/cloudinary_service'; 
 import { 
   validateAuthenticated, 
-  validateAvatarFile    // <-- AGGIUNTO
+  validateAvatarFile
 } from '../validators/auth_validators';
 
 const prisma = new PrismaClient();

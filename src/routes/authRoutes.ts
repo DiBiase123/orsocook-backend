@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
-import { authController } from '../controllers';
-import { authenticateToken } from '../middleware/auth';
+import { authController } from '@controllers';
+import { authenticateToken } from '@middleware';
 
 const router = express.Router();
 

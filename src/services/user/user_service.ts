@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { uploadImageToCloudinary } from '../cloudinary_service';
-import { sanitizeUser } from '../../utils/auth/sanitize_utils';
+import { sanitizeUser } from '@utils/auth';  // <-- MODIFICATO CON ALIAS
+
 const prisma = new PrismaClient();
 
 export interface UpdateAvatarData {
@@ -42,7 +43,7 @@ export class UserService {
         }
       });
 
-      return user;
+      return sanitizeUser(user);
     } catch (error) {
       console.error('UserService - getCurrentUser error:', error);
       throw new Error('Errore nel recupero dell\'utente');
@@ -169,7 +170,7 @@ export class UserService {
       }));
 
       return {
-        user,
+        user: sanitizeUser(user),
         stats: {
           recipesCount,
           favoritesCount,
@@ -311,7 +312,7 @@ export class UserService {
         }
       });
 
-      return updatedUser;
+      return sanitizeUser(updatedUser);
 
     } catch (error) {
       console.error('UserService - updateProfile error:', error);

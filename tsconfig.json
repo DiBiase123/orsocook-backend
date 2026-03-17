@@ -12,7 +12,21 @@
     "resolveJsonModule": true,
     "declaration": false,
     "sourceMap": false,
-    "typeRoots": []
+    "typeRoots": [],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@controllers": ["src/controllers/index"],
+      "@middleware": ["src/middleware/index"],
+      "@middleware/auth": ["src/middleware/auth"],
+      "@services": ["src/services/index"],
+      "@services/user": ["src/services/user/index"],
+      "@services/auth": ["src/services/auth/index"],
+      "@services/cloudinary_service": ["src/services/cloudinary_service"],
+      "@utils": ["src/utils/index"],
+      "@utils/auth": ["src/utils/auth/index"],
+      "@utils/logger": ["src/utils/logger/index"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"]
