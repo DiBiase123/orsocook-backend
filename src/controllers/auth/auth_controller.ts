@@ -33,8 +33,8 @@ export const logout = (req: Request, res: Response) => logoutStrategy(req, res);
 export const getCurrentUser = (req: AuthRequest, res: Response) => getCurrentUserStrategy(req, res);
 export const getUserProfile = (req: AuthRequest, res: Response) => getUserProfileStrategy(req, res);
 export const updateAvatar = (req: AuthRequest, res: Response) => updateAvatarStrategy(req, res);
-export const updateProfile = (req: AuthRequest, res: Response) => updateProfileStrategy(req, res);    // <-- NUOVO
-export const deleteAccount = (req: AuthRequest, res: Response) => deleteAccountStrategy(req, res);    // <-- NUOVO
+export const updateProfile = (req: AuthRequest, res: Response) => updateProfileStrategy(req, res);
+export const deleteAccount = (req: AuthRequest, res: Response) => deleteAccountStrategy(req, res);
 
 // ==================== SESSIONI ====================
 export const getUserSessions = (req: AuthRequest, res: Response) => getUserSessionsStrategy(req, res);
