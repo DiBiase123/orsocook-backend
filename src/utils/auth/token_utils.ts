@@ -10,9 +10,6 @@ export interface TokenPayload {
   isVerified: boolean;
 }
 
-/**
- * Genera entrambi i token (access + refresh)
- */
 export const generateTokens = (user: any): { accessToken: string; refreshToken: string } => {
   const payload: TokenPayload = {
     id: user.id,
@@ -22,55 +19,37 @@ export const generateTokens = (user: any): { accessToken: string; refreshToken: 
   };
   
   return {
-    accessToken: jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' }),
-    refreshToken: jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: '7d' })
+    accessToken: jwt.sign(payload, JWT_SECRET, { expiresIn: '6h' }),      // ← 6 ore
+    refreshToken: jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: '1d' }) // ← 1 giorno
   };
 };
 
-/**
- * Genera solo access token
- */
 export const generateAccessToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '6h' }); // ← 6 ore
 };
 
-/**
- * Genera solo refresh token
- */
 export const generateRefreshToken = (userId: string): string => {
-  return jwt.sign({ id: userId }, REFRESH_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id: userId }, REFRESH_SECRET, { expiresIn: '1d' }); // ← 1 giorno
 };
 
-/**
- * Verifica access token
- */
 export const verifyAccessToken = (token: string): TokenPayload => {
   return jwt.verify(token, JWT_SECRET) as TokenPayload;
 };
 
-/**
- * Verifica refresh token
- */
 export const verifyRefreshToken = (token: string): { id: string } => {
   return jwt.verify(token, REFRESH_SECRET) as { id: string };
 };
 
-/**
- * Decodifica token senza verifica (per debugging)
- */
 export const decodeToken = (token: string): any => {
   return jwt.decode(token);
 };
 
-/**
- * Calcola il tempo rimanente prima della scadenza del token
- */
 export const getTokenRemainingTime = (token: string): number | null => {
   try {
     const decoded: any = jwt.decode(token);
     if (!decoded || !decoded.exp) return null;
     
-    const expiryTime = decoded.exp * 1000; // Converti in millisecondi
+    const expiryTime = decoded.exp * 1000;
     const currentTime = Date.now();
     
     return Math.max(0, expiryTime - currentTime);
