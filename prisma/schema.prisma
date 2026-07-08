@@ -9,31 +9,32 @@ datasource db {
 }
 
 model User {
-  id               String     @id @default(uuid())
-  email            String     @unique
-  username         String     @unique
+  id               String        @id @default(uuid())
+  email            String        @unique
+  username         String        @unique
   passwordHash     String
   displayName      String?
   avatarUrl        String?
   bio              String?
-  role             Role       @default(USER)
-  isVerified       Boolean    @default(false)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  emailToken       String?    @unique
+  role             Role          @default(USER)
+  isVerified       Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  emailToken       String?       @unique
   emailTokenExpiry DateTime?
   lastLogin        DateTime?
   lockedUntil      DateTime?
-  loginAttempts    Int        @default(0)
-  resetToken       String?    @unique
+  loginAttempts    Int           @default(0)
+  resetToken       String?       @unique
   resetTokenExpiry DateTime?
   comments         Comment[]
   favorites        Favorite[]
-  followers        Follows[]  @relation("followers")
-  following        Follows[]  @relation("following")
+  followers        Follows[]     @relation("followers")
+  following        Follows[]     @relation("following")
   likes            Like[]
   recipes          Recipe[]
   sessions         Session[]
+  webDocuments     WebDocument[]
 
   @@map("users")
 }
@@ -167,6 +168,22 @@ model Comment {
   @@index([recipeId])
   @@index([userId])
   @@map("comments")
+}
+
+model WebDocument {
+  id           String   @id @default(uuid())
+  description  String
+  documentDate DateTime
+  ente         String
+  fileUrl      String
+  fileName     String
+  fileSize     Int?
+  uploadedBy   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  uploadedByUser User   @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@map("web_documents")
 }
 
 enum Role {
