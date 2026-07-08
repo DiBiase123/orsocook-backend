@@ -36,7 +36,7 @@ router.get('/:id', (req: any, res: express.Response) =>
   webDocumentsController.getDocumentById(req, res));
 
 // POST - Upload nuovo documento
-router.post('/', upload.single('file'), (req: any, res: express.Response) =>
+router.post('/', (req: any, res: express.Response) =>
   webDocumentsController.createDocument(req, res));
 
 // PUT - Modifica documento
