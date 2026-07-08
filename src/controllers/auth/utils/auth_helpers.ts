@@ -16,7 +16,7 @@ export const generateTokens = (user: any) => ({
       role: user.role 
     },
     JWT_SECRET,
-    { expiresIn: '15m' }
+    { expiresIn: '1h' }
   ),
   refreshToken: jwt.sign(
     { id: user.id },
