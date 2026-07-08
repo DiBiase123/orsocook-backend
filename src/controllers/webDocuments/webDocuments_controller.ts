@@ -88,30 +88,26 @@ export const downloadDocument = async (req: AuthRequest, res: Response): Promise
   }
 };
 
-// POST - Upload nuovo documento
+// POST - Upload nuovo documento (base64)
 export const createDocument = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-        console.log('📤 Upload ricevuto - file:', !!req.file, 'body:', req.body);
+    const { description, documentDate, ente, fileName, fileData } = req.body;
 
-    const { description, documentDate, ente } = req.body;
-    const file = req.file;
-
-    if (!file) {
+    if (!fileData) {
       res.status(400).json({ success: false, message: 'File PDF richiesto' });
       return;
     }
 
-    if (!description || !documentDate || !ente) {
-      res.status(400).json({ success: false, message: 'Tutti i campi sono obbligatori: description, documentDate, ente' });
+    if (!description || !documentDate || !ente || !fileName) {
+      res.status(400).json({ success: false, message: 'Tutti i campi sono obbligatori' });
       return;
     }
 
-    // Genera nome file univoco
-    const uniqueFileName = `${Date.now()}-${file.originalname}`;
+    // Decodifica base64
+    const buffer = Buffer.from(fileData, 'base64');
+    const uniqueFileName = `${Date.now()}-${fileName}`;
     const filePath = path.join(UPLOADS_DIR, uniqueFileName);
-
-    // Salva file su disco
-    fs.writeFileSync(filePath, file.buffer);
+    fs.writeFileSync(filePath, buffer);
 
     const fileUrl = `/api/webdocuments/download/${uniqueFileName}`;
 
@@ -122,7 +118,7 @@ export const createDocument = async (req: AuthRequest, res: Response): Promise<v
         ente,
         fileUrl,
         fileName: uniqueFileName,
-        fileSize: file.size,
+        fileSize: buffer.length,
         uploadedBy: req.user.id,
       },
     });
