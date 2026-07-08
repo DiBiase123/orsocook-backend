@@ -79,8 +79,11 @@ export const downloadDocument = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
+    const isDownload = req.query.download === 'true';
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${document.fileName}"`);
+    res.setHeader('Content-Disposition', isDownload 
+      ? `attachment; filename="${document.fileName}"` 
+      : `inline; filename="${document.fileName}"`);
     res.sendFile(filePath);
   } catch (error) {
     console.error('Error downloading document:', error);
@@ -103,9 +106,23 @@ export const createDocument = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    const uniqueFileName = fileName;
+
+    // Controlla se esiste già un file con lo stesso nome per questo utente
+    const existing = await prisma.webDocument.findFirst({
+      where: { 
+        fileName: uniqueFileName,
+        uploadedBy: req.user.id 
+      },
+    });
+
+    if (existing) {
+      res.status(409).json({ success: false, message: 'File già inserito' });
+      return;
+    }
+
     // Decodifica base64
     const buffer = Buffer.from(fileData, 'base64');
-    const uniqueFileName = `${Date.now()}-${fileName}`;
     const filePath = path.join(UPLOADS_DIR, uniqueFileName);
     fs.writeFileSync(filePath, buffer);
 
