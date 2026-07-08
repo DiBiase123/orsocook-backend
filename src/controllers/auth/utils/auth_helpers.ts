@@ -12,7 +12,8 @@ export const generateTokens = (user: any) => ({
       id: user.id, 
       username: user.username, 
       email: user.email,
-      isVerified: user.isVerified 
+      isVerified: user.isVerified,
+      role: user.role 
     },
     JWT_SECRET,
     { expiresIn: '15m' }
