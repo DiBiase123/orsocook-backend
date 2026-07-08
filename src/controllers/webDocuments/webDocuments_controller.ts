@@ -1,8 +1,17 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../../middleware/auth';
+import path from 'path';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
+
+const UPLOADS_DIR = path.join(__dirname, '../../uploads/documents');
+
+// Assicura che la cartella esista
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 // GET - Lista documenti (solo i propri)
 export const getDocuments = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -28,7 +37,7 @@ export const getDocuments = async (req: AuthRequest, res: Response): Promise<voi
   }
 };
 
-// GET - Singolo documento (con URL per download)
+// GET - Singolo documento (metadati)
 export const getDocumentById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -49,6 +58,36 @@ export const getDocumentById = async (req: AuthRequest, res: Response): Promise<
   }
 };
 
+// GET - Download/visualizzazione file PDF (protetto)
+export const downloadDocument = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const document = await prisma.webDocument.findFirst({
+      where: { id, uploadedBy: req.user.id },
+    });
+
+    if (!document) {
+      res.status(404).json({ success: false, message: 'Documento non trovato' });
+      return;
+    }
+
+    const filePath = path.join(UPLOADS_DIR, document.fileName);
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ success: false, message: 'File non trovato su disco' });
+      return;
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${document.fileName}"`);
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error downloading document:', error);
+    res.status(500).json({ success: false, message: 'Errore nel download documento' });
+  }
+};
+
 // POST - Upload nuovo documento
 export const createDocument = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -65,8 +104,14 @@ export const createDocument = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    // TODO: upload a Cloudinary e ottenere URL
-    const fileUrl = ''; // Placeholder - da implementare con Cloudinary
+    // Genera nome file univoco
+    const uniqueFileName = `${Date.now()}-${file.originalname}`;
+    const filePath = path.join(UPLOADS_DIR, uniqueFileName);
+
+    // Salva file su disco
+    fs.writeFileSync(filePath, file.buffer);
+
+    const fileUrl = `/api/webdocuments/download/${uniqueFileName}`;
 
     const document = await prisma.webDocument.create({
       data: {
@@ -74,7 +119,7 @@ export const createDocument = async (req: AuthRequest, res: Response): Promise<v
         documentDate: new Date(documentDate),
         ente,
         fileUrl,
-        fileName: file.originalname,
+        fileName: uniqueFileName,
         fileSize: file.size,
         uploadedBy: req.user.id,
       },
@@ -132,7 +177,11 @@ export const deleteDocument = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    // TODO: eliminare anche il file da Cloudinary
+    // Elimina file da disco
+    const filePath = path.join(UPLOADS_DIR, existing.fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
 
     await prisma.webDocument.delete({ where: { id } });
 
@@ -146,6 +195,7 @@ export const deleteDocument = async (req: AuthRequest, res: Response): Promise<v
 export default {
   getDocuments,
   getDocumentById,
+  downloadDocument,
   createDocument,
   updateDocument,
   deleteDocument,

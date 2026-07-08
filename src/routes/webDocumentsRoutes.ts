@@ -27,7 +27,11 @@ router.use(authenticateToken);
 router.get('/', (req: any, res: express.Response) =>
   webDocumentsController.getDocuments(req, res));
 
-// GET - Singolo documento
+// GET - Download file PDF (protetto)
+router.get('/download/:fileName', (req: any, res: express.Response) =>
+  webDocumentsController.downloadDocument(req, res));
+
+// GET - Singolo documento (metadati)
 router.get('/:id', (req: any, res: express.Response) =>
   webDocumentsController.getDocumentById(req, res));
 
