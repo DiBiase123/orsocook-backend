@@ -91,6 +91,8 @@ export const downloadDocument = async (req: AuthRequest, res: Response): Promise
 // POST - Upload nuovo documento
 export const createDocument = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+        console.log('📤 Upload ricevuto - file:', !!req.file, 'body:', req.body);
+
     const { description, documentDate, ente } = req.body;
     const file = req.file;
 
