@@ -6,7 +6,7 @@ import fs from 'fs';
 
 const prisma = new PrismaClient();
 
-const UPLOADS_DIR = path.join(__dirname, '../../uploads/documents');
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads', 'documents');
 
 // Assicura che la cartella esista
 if (!fs.existsSync(UPLOADS_DIR)) {
