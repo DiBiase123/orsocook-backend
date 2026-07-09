@@ -1,17 +1,8 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../../middleware/auth';
-import path from 'path';
-import fs from 'fs';
 
 const prisma = new PrismaClient();
-
-const UPLOADS_DIR = path.join(process.cwd(), 'uploads', 'documents');
-
-// Assicura che la cartella esista
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
 
 // GET - Lista documenti (solo i propri)
 export const getDocuments = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -58,7 +49,7 @@ export const getDocumentById = async (req: AuthRequest, res: Response): Promise<
   }
 };
 
-// GET - Download/visualizzazione file PDF (protetto)
+// GET - Download/visualizzazione file PDF dal DB
 export const downloadDocument = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -67,31 +58,26 @@ export const downloadDocument = async (req: AuthRequest, res: Response): Promise
       where: { id, uploadedBy: req.user.id },
     });
 
-    if (!document) {
+    if (!document || !document.fileData) {
       res.status(404).json({ success: false, message: 'Documento non trovato' });
       return;
     }
 
-    const filePath = path.join(UPLOADS_DIR, document.fileName);
-
-    if (!fs.existsSync(filePath)) {
-      res.status(404).json({ success: false, message: 'File non trovato su disco' });
-      return;
-    }
-
+    const buffer = Buffer.from(document.fileData, 'base64');
     const isDownload = req.query.download === 'true';
+
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', isDownload 
-      ? `attachment; filename="${document.fileName}"` 
+    res.setHeader('Content-Disposition', isDownload
+      ? `attachment; filename="${document.fileName}"`
       : `inline; filename="${document.fileName}"`);
-    res.sendFile(filePath);
+    res.send(buffer);
   } catch (error) {
     console.error('Error downloading document:', error);
     res.status(500).json({ success: false, message: 'Errore nel download documento' });
   }
 };
 
-// POST - Upload nuovo documento (base64)
+// POST - Upload nuovo documento (base64 salvato nel DB)
 export const createDocument = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { description, documentDate, ente, fileName, fileData } = req.body;
@@ -106,36 +92,27 @@ export const createDocument = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    const uniqueFileName = fileName;
-
-    // Controlla se esiste già un file con lo stesso nome per questo utente
+    // Controlla duplicato
     const existing = await prisma.webDocument.findFirst({
-      where: { 
-        fileName: uniqueFileName,
-        uploadedBy: req.user.id 
-      },
+      where: { fileName, uploadedBy: req.user.id },
     });
 
     if (existing) {
-      res.status(409).json({ success: false, message: 'File già inserito' });
+      res.status(409).json({ success: false, message: 'File già presente' });
       return;
     }
 
-    // Decodifica base64
     const buffer = Buffer.from(fileData, 'base64');
-    const filePath = path.join(UPLOADS_DIR, uniqueFileName);
-    fs.writeFileSync(filePath, buffer);
-
-    const fileUrl = `/api/webdocuments/download/${uniqueFileName}`;
 
     const document = await prisma.webDocument.create({
       data: {
         description,
         documentDate: new Date(documentDate),
         ente,
-        fileUrl,
-        fileName: uniqueFileName,
+        fileUrl: '',
+        fileName,
         fileSize: buffer.length,
+        fileData: fileData,
         uploadedBy: req.user.id,
       },
     });
@@ -190,12 +167,6 @@ export const deleteDocument = async (req: AuthRequest, res: Response): Promise<v
     if (!existing) {
       res.status(404).json({ success: false, message: 'Documento non trovato' });
       return;
-    }
-
-    // Elimina file da disco
-    const filePath = path.join(UPLOADS_DIR, existing.fileName);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
     }
 
     await prisma.webDocument.delete({ where: { id } });

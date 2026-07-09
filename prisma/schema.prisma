@@ -178,6 +178,7 @@ model WebDocument {
   fileUrl      String
   fileName     String
   fileSize     Int?
+  fileData     String?
   uploadedBy   String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
