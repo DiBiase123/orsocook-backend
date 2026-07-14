@@ -20,7 +20,7 @@ async function initializeDatabase() {
     } catch (error) {
       console.log('⚠️  Tabelle mancanti, creazione...');
       const { execSync } = require('child_process');
-      execSync('npx prisma db push', { stdio: 'inherit' });
+      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
       console.log('✅ Tabelle create');
     }
     
