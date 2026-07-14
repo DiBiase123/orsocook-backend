@@ -25,7 +25,7 @@ async function initializeDatabase() {
     }
     
     await prisma.$disconnect();
-  } catch (error) {
+    } catch (error) {
     console.error('❌ Errore database:', error);
     throw error;
   }

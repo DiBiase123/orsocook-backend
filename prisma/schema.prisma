@@ -34,7 +34,6 @@ model User {
   likes            Like[]
   recipes          Recipe[]
   sessions         Session[]
-  webDocuments     WebDocument[]
 
   @@map("users")
 }
@@ -168,23 +167,6 @@ model Comment {
   @@index([recipeId])
   @@index([userId])
   @@map("comments")
-}
-
-model WebDocument {
-  id           String   @id @default(uuid())
-  description  String
-  documentDate DateTime
-  ente         String
-  fileUrl      String
-  fileName     String
-  fileSize     Int?
-  fileData     String?
-  uploadedBy   String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  uploadedByUser User   @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
-
-  @@map("web_documents")
 }
 
 enum Role {
