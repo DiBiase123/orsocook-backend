@@ -1,20 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-// Estendi l'interfaccia Request di Express
-declare module 'express' {
-  interface Request {
-    user?: {
-      id: string;
-      email: string;
-      role: string;
-    };
-    file?: any;
-    files?: any[];
-  }
-}
-
-// Definisci e esporta l'interfaccia COMPLETA
 export interface AuthRequest extends Request {
   user: {
     id: string;
@@ -36,13 +22,11 @@ export const authenticateToken = (
 ): void => {
   let token: string | undefined;
 
-  // 1. Prova header Authorization
   const authHeader = req.headers['authorization'];
   if (authHeader) {
     token = authHeader.split(' ')[1];
   }
 
-  // 2. Se non trovato, prova query parameter (per download PDF)
   if (!token && req.query.token) {
     token = req.query.token as string;
   }
@@ -58,7 +42,6 @@ export const authenticateToken = (
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     
-    // NORMALIZZA I CAMPI: assicurati che ci sia sempre 'id' e 'userId'
     if (decoded && typeof decoded === 'object') {
       const userObj = decoded as any;
       req.user = {
@@ -69,11 +52,7 @@ export const authenticateToken = (
         role: userObj.role || 'user'
       };
     } else {
-      req.user = {
-        id: '',
-        email: '',
-        role: 'user'
-      };
+      req.user = { id: '', email: '', role: 'user' };
     }
     
     next();
